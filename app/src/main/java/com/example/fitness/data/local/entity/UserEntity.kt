@@ -12,7 +12,6 @@ data class UserEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val email: String,
-    val noHP: String,
     val passwordHash: String,
     val role: String = "USER",
     val createdAt: Long = System.currentTimeMillis()
