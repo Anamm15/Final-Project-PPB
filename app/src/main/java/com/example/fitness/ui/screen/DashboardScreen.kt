@@ -16,15 +16,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.fitness.data.local.entity.ActivityEntity
 import com.example.fitness.viewmodel.DashboardViewModel
 import com.example.fitness.viewmodel.formatDate
+import com.example.fitness.util.formatDurationLabel
+import androidx.compose.ui.Modifier
 
 @Composable
 fun DashboardScreen(
@@ -98,6 +101,12 @@ fun DashboardScreen(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        Spacer(Modifier.height(24.dp))
+        DailyStreakCard(
+            streak = state.dailyStreak,
+            hasActivityToday = state.hasActivityToday
+        )
 
         Spacer(Modifier.height(24.dp))
         Text(
@@ -195,6 +204,57 @@ private fun PointsCard(points: Int, tierName: String?, activeUntil: Long?) {
 }
 
 @Composable
+private fun DailyStreakCard(streak: Int, hasActivityToday: Boolean) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    "Streak harian",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "$streak hari",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .background(
+                        if (hasActivityToday)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
+                        RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "🔥",
+                    fontSize = 24.sp,
+                    modifier = Modifier.graphicsLayer(
+                        alpha = if (hasActivityToday) 1f else 0.5f
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun ActionTile(
     icon: ImageVector,
     title: String,
@@ -238,6 +298,12 @@ private fun ActionTile(
 
 @Composable
 private fun ActivityRow(activity: ActivityEntity) {
+    val duration = if (activity.endTime != null) {
+        (activity.endTime - activity.startTime) / 1000
+    } else {
+        0L
+    }
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
@@ -256,7 +322,12 @@ private fun ActivityRow(activity: ActivityEntity) {
         Column(Modifier.weight(1f)) {
             Text(activity.type, style = MaterialTheme.typography.bodyLarge)
             Text(
-                formatDate(activity.createdAt),
+                buildString {
+                    append(formatDate(activity.createdAt))
+                    if (activity.endTime != null) {
+                        append(" · ${formatDurationLabel(duration)}")
+                    }
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -269,3 +340,5 @@ private fun ActivityRow(activity: ActivityEntity) {
         )
     }
 }
+
+// Helper function for graphicsLayer alpha
